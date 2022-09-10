@@ -1,13 +1,13 @@
-import postgres from './../databases/postgres';
+import prisma from '../databases/prisma';
+import { CredentialCreate } from './../types/credentialTypes';
 
 /**
  * @description Insert a new credential record into the database.
  * @param {Object} credentialData An object with the fields needed to create a credential
  */
-async function create(credentialData: { userId: any, label: any, url: any, username: any, password: any }){
+async function create(credentialData: CredentialCreate){
     
-	 const { userId, label, url, username, password } = credentialData;
-    await postgres.credential.create({ userId, label, url, username, password });
+    await prisma.credentials.create({ data: credentialData });
 
 }
 
@@ -18,7 +18,7 @@ async function create(credentialData: { userId: any, label: any, url: any, usern
  */
 async function getById(id: number){
 
-    return await postgres.credential.findUnique({
+    return await prisma.credentials.findUnique({
         where: {
             id
         }
@@ -28,29 +28,15 @@ async function getById(id: number){
 
 /**
  * @description Search for a list of credentials.
+ * @param {Number} userId The user ID to use on where clause.
  * @returns A list of credentials.
  */
-async function list(){
+async function list(userId: number){
 
-    return await postgres.credential.findMany();
-
-}
-
-/**
- * @description Updates all data of a single record of credential
- * @param {Object} credentialData An object with the fields needed to update a credential
- */
-async function update(id: number, credentialData: { userId: any, label: any, url: any, username: any, password: any }){
-    
-	 const { userId, label, url, username, password } = credentialData;
-    await postgres.credential.update({
-        where: {
-            id
-        },
-        data: {
-            userId, label, url, username, password
-        }
+    const credentials = await prisma.credentials.findMany({
+        where: { userId }
     });
+    return credentials;
 
 }
 
@@ -60,7 +46,7 @@ async function update(id: number, credentialData: { userId: any, label: any, url
  */
 async function deleteCredential(id: number){
 
-    await postgres.credential.delete({
+    await prisma.credentials.delete({
         where: {
             id
         },
@@ -68,10 +54,23 @@ async function deleteCredential(id: number){
 
 }
 
+async function findByLabelAndUserId(userId: number, label: string){
+
+    const credential = await prisma.credentials.findFirst({
+        where: {
+            label,
+            userId
+        }
+    });
+
+    return credential;
+
+}
+
 export default {
     create,
     getById,
     list,
-    update,
-    deleteCredential
+    deleteCredential,
+    findByLabelAndUserId
 }

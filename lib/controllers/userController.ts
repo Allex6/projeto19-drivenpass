@@ -9,42 +9,15 @@ async function createUser(req :Request, res :Response, next :NextFunction){
 
 }
 
-async function getById(req :Request, res :Response, next :NextFunction){
+async function login(req :Request, res :Response, next :NextFunction){
 
-    const { id } = req.params;
-    const userData = await userService.getById(Number(id));
-    res.send(userData);
-
-}
-
-async function list(req :Request, res :Response, next :NextFunction){
-
-    const users = await userService.list();
-    res.send(users);
-
-}
-
-async function updateUser(req :Request, res :Response, next :NextFunction){
-
-    const { id } = req.params;
     const bodyData = req.body;
-    await userService.updateUser(Number(id), bodyData);
-    res.sendStatus(200);
-
-}
-
-async function deleteUser(req :Request, res :Response, next :NextFunction){
-
-    const { id } = req.params;
-    await userService.deleteUser(Number(id));
-    res.sendStatus(200);
+    const token = await userService.login(bodyData);
+    res.send({ token });
 
 }
 
 export default {
     createUser,
-    getById,
-    list,
-    updateUser,
-    deleteUser
+    login
 }

@@ -1,13 +1,13 @@
-import postgres from './../databases/postgres';
+import prisma from '../databases/prisma';
+import { CardCreate } from './../types/cardTypes';
 
 /**
  * @description Insert a new card record into the database.
  * @param {Object} cardData An object with the fields needed to create a card
  */
-async function create(cardData: { userId: any, label: any, cardNumber: any, cardHolderName: any, securityCode: any, expirationDate: any, password: any, isVirtual: any, type: any }){
+async function create(cardData: CardCreate){
     
-	 const { userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type } = cardData;
-    await postgres.card.create({ userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type });
+    await prisma.cards.create({ data: cardData });
 
 }
 
@@ -18,7 +18,7 @@ async function create(cardData: { userId: any, label: any, cardNumber: any, card
  */
 async function getById(id: number){
 
-    return await postgres.card.findUnique({
+    return await prisma.cards.findUnique({
         where: {
             id
         }
@@ -30,27 +30,10 @@ async function getById(id: number){
  * @description Search for a list of cards.
  * @returns A list of cards.
  */
-async function list(){
+async function list(userId: number){
 
-    return await postgres.card.findMany();
-
-}
-
-/**
- * @description Updates all data of a single record of card
- * @param {Object} cardData An object with the fields needed to update a card
- */
-async function update(id: number, cardData: { userId: any, label: any, cardNumber: any, cardHolderName: any, securityCode: any, expirationDate: any, password: any, isVirtual: any, type: any }){
-    
-	 const { userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type } = cardData;
-    await postgres.card.update({
-        where: {
-            id
-        },
-        data: {
-            userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type
-        }
-    });
+    const cards = await prisma.cards.findMany({ where: { userId } });
+    return cards;
 
 }
 
@@ -60,7 +43,7 @@ async function update(id: number, cardData: { userId: any, label: any, cardNumbe
  */
 async function deleteCard(id: number){
 
-    await postgres.card.delete({
+    await prisma.cards.delete({
         where: {
             id
         },
@@ -68,10 +51,23 @@ async function deleteCard(id: number){
 
 }
 
+async function findByLabelAndUserId(userId: number, label: string){
+
+    const credential = await prisma.credentials.findFirst({
+        where: {
+            label,
+            userId
+        }
+    });
+
+    return credential;
+
+}
+
 export default {
     create,
     getById,
     list,
-    update,
-    deleteCard
+    deleteCard,
+    findByLabelAndUserId
 }

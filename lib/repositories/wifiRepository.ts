@@ -1,13 +1,13 @@
-import postgres from './../databases/postgres';
+import prisma from '../databases/prisma';
+import { WifiCreate } from './../types/wifiTypes';
 
 /**
  * @description Insert a new wifi record into the database.
- * @param {Object} wifiData An object with the fields needed to create a wifi
+ * @param {WifiCreate} wifiData An object with the fields needed to create a wifi
  */
-async function create(wifiData: { userId: any, label: any, name: any, password: any }){
+async function create(wifiData: WifiCreate){
     
-	 const { userId, label, name, password } = wifiData;
-    await postgres.wifi.create({ userId, label, name, password });
+    await prisma.wifis.create({ data: wifiData });
 
 }
 
@@ -18,7 +18,7 @@ async function create(wifiData: { userId: any, label: any, name: any, password: 
  */
 async function getById(id: number){
 
-    return await postgres.wifi.findUnique({
+    return await prisma.wifis.findUnique({
         where: {
             id
         }
@@ -30,27 +30,10 @@ async function getById(id: number){
  * @description Search for a list of wifis.
  * @returns A list of wifis.
  */
-async function list(){
+async function list(userId: number){
 
-    return await postgres.wifi.findMany();
-
-}
-
-/**
- * @description Updates all data of a single record of wifi
- * @param {Object} wifiData An object with the fields needed to update a wifi
- */
-async function update(id: number, wifiData: { userId: any, label: any, name: any, password: any }){
-    
-	 const { userId, label, name, password } = wifiData;
-    await postgres.wifi.update({
-        where: {
-            id
-        },
-        data: {
-            userId, label, name, password
-        }
-    });
+    const wifis = await prisma.wifis.findMany({ where: { userId } });
+    return wifis;
 
 }
 
@@ -60,7 +43,7 @@ async function update(id: number, wifiData: { userId: any, label: any, name: any
  */
 async function deleteWifi(id: number){
 
-    await postgres.wifi.delete({
+    await prisma.wifis.delete({
         where: {
             id
         },
@@ -68,10 +51,23 @@ async function deleteWifi(id: number){
 
 }
 
+async function findByLabelAndUserId(userId: number, label: string){
+
+    const wifi = await prisma.wifis.findFirst({
+        where: {
+            label,
+            userId
+        }
+    });
+
+    return wifi;
+
+}
+
 export default {
     create,
     getById,
     list,
-    update,
-    deleteWifi
+    deleteWifi,
+    findByLabelAndUserId
 }

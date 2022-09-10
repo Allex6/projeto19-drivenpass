@@ -1,33 +1,50 @@
 import cardRepository from '../repositories/cardRepository';
 import errorFactory from '../utils/errorFactory';
+import { CardCreate } from './../types/cardTypes';
+import Cryptr from 'cryptr';
+import dotenv from 'dotenv';
 
-async function createCard(cardData: { userId: any, label: any, cardNumber: any, cardHolderName: any, securityCode: any, expirationDate: any, password: any, isVirtual: any, type: any }){
+dotenv.config();
+
+const CRYPTR_SECRET = process.env.CRYPTR_SECRET || 'strong secret';
+
+const cryptr = new Cryptr(CRYPTR_SECRET);
+
+async function createCard(loggedUser: number, cardData: CardCreate){
     
-	 const { userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type} = cardData;
-    await cardRepository.create({ userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type });
+    if(loggedUser !== cardData.userId) throw errorFactory('unauthorized', 'Invalid user ID.');
+
+    const credentialWithSameLabel = await cardRepository.findByLabelAndUserId(cardData.userId, cardData.label);
+
+    if(credentialWithSameLabel) throw errorFactory('conflict', 'There is already a credential registered with this label/title on your account.');
+
+    cardData.securityCode = cryptr.encrypt(cardData.securityCode);
+    cardData.password = cryptr.encrypt(cardData.password);
+
+    await cardRepository.create(cardData);
 
 }
 
-async function getById(id: number){
+async function getById(loggedUser: number, id: number){
 
-    await cardRepository.getById(id);
+    const card = await cardRepository.getById(id);
+    if(!card || card.userId !== loggedUser) throw errorFactory('not_found', 'Could not find the card.');
 
-}
-
-async function list(){
-
-    await cardRepository.list();
+    return card;
 
 }
 
-async function updateCard(id: number, cardData: { userId: any, label: any, cardNumber: any, cardHolderName: any, securityCode: any, expirationDate: any, password: any, isVirtual: any, type: any }){
-    
-	 const { userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type } = cardData;
-    await cardRepository.update(id, { userId, label, cardNumber, cardHolderName, securityCode, expirationDate, password, isVirtual, type });
+async function list(loggedUser: number){
+
+    const cards = await cardRepository.list(loggedUser);
+    return cards;
 
 }
 
-async function deleteCard(id: number){
+async function deleteCard(loggedUser: number, id: number){
+
+    const card = await cardRepository.getById(id);
+    if(!card || card.userId !== loggedUser) throw errorFactory('not_found', 'Could not find the card.');
 
     await cardRepository.deleteCard(id);
 
@@ -37,6 +54,5 @@ export default {
     createCard,
     getById,
     list,
-    updateCard,
     deleteCard
 }

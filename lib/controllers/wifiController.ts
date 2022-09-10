@@ -4,7 +4,8 @@ import { Request, Response, NextFunction } from 'express';
 async function createWifi(req :Request, res :Response, next :NextFunction){
 
     const bodyData = req.body;
-    await wifiService.createWifi(bodyData);
+    const { loggedUser } = res.locals;
+    await wifiService.createWifi(Number(loggedUser), bodyData);
     res.sendStatus(201);
 
 }
@@ -12,31 +13,25 @@ async function createWifi(req :Request, res :Response, next :NextFunction){
 async function getById(req :Request, res :Response, next :NextFunction){
 
     const { id } = req.params;
-    const wifiData = await wifiService.getById(Number(id));
+    const { loggedUser } = res.locals;
+    const wifiData = await wifiService.getById(Number(loggedUser), Number(id));
     res.send(wifiData);
 
 }
 
 async function list(req :Request, res :Response, next :NextFunction){
 
-    const wifis = await wifiService.list();
+    const { loggedUser } = res.locals;
+    const wifis = await wifiService.list(Number(loggedUser));
     res.send(wifis);
-
-}
-
-async function updateWifi(req :Request, res :Response, next :NextFunction){
-
-    const { id } = req.params;
-    const bodyData = req.body;
-    await wifiService.updateWifi(Number(id), bodyData);
-    res.sendStatus(200);
 
 }
 
 async function deleteWifi(req :Request, res :Response, next :NextFunction){
 
     const { id } = req.params;
-    await wifiService.deleteWifi(Number(id));
+    const { loggedUser } = res.locals;
+    await wifiService.deleteWifi(Number(loggedUser), Number(id));
     res.sendStatus(200);
 
 }
@@ -45,6 +40,5 @@ export default {
     createWifi,
     getById,
     list,
-    updateWifi,
     deleteWifi
 }

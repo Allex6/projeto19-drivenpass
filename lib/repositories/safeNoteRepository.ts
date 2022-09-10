@@ -1,13 +1,13 @@
-import postgres from './../databases/postgres';
+import prisma from '../databases/prisma';
+import { SafeNoteCreate } from './../types/safeNoteTypes';
 
 /**
  * @description Insert a new safeNote record into the database.
  * @param {Object} safeNoteData An object with the fields needed to create a safeNote
  */
-async function create(safeNoteData: { userId: any, label: any, content: any }){
+async function create(safeNoteData: SafeNoteCreate){
     
-	 const { userId, label, content } = safeNoteData;
-    await postgres.safeNote.create({ userId, label, content });
+    await prisma.safeNotes.create({ data: safeNoteData });
 
 }
 
@@ -18,7 +18,7 @@ async function create(safeNoteData: { userId: any, label: any, content: any }){
  */
 async function getById(id: number){
 
-    return await postgres.safeNote.findUnique({
+    return await prisma.safeNotes.findUnique({
         where: {
             id
         }
@@ -30,27 +30,12 @@ async function getById(id: number){
  * @description Search for a list of safeNotes.
  * @returns A list of safeNotes.
  */
-async function list(){
+async function list(userId: number){
 
-    return await postgres.safeNote.findMany();
-
-}
-
-/**
- * @description Updates all data of a single record of safeNote
- * @param {Object} safeNoteData An object with the fields needed to update a safeNote
- */
-async function update(id: number, safeNoteData: { userId: any, label: any, content: any }){
-    
-	 const { userId, label, content } = safeNoteData;
-    await postgres.safeNote.update({
-        where: {
-            id
-        },
-        data: {
-            userId, label, content
-        }
+    const safeNotes = await prisma.safeNotes.findMany({
+        where: { userId }
     });
+    return safeNotes;
 
 }
 
@@ -60,7 +45,7 @@ async function update(id: number, safeNoteData: { userId: any, label: any, conte
  */
 async function deleteSafeNote(id: number){
 
-    await postgres.safeNote.delete({
+    await prisma.safeNotes.delete({
         where: {
             id
         },
@@ -68,10 +53,23 @@ async function deleteSafeNote(id: number){
 
 }
 
+async function findByLabelAndUserId(userId: number, label: string){
+
+    const safeNote = await prisma.safeNotes.findFirst({
+        where: {
+            label,
+            userId
+        }
+    });
+
+    return safeNote;
+
+}
+
 export default {
     create,
     getById,
     list,
-    update,
-    deleteSafeNote
+    deleteSafeNote,
+    findByLabelAndUserId
 }

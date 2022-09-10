@@ -1,33 +1,45 @@
 import wifiRepository from '../repositories/wifiRepository';
 import errorFactory from '../utils/errorFactory';
+import { WifiCreate } from './../types/wifiTypes';
+import Cryptr from 'cryptr';
+import dotenv from 'dotenv';
 
-async function createWifi(wifiData: { userId: any, label: any, name: any, password: any }){
+dotenv.config();
+
+const CRYPTR_SECRET = process.env.CRYPTR_SECRET || 'strong secret';
+
+const cryptr = new Cryptr(CRYPTR_SECRET);
+
+async function createWifi(loggedUser: number, wifiData: WifiCreate){
+
+    const wifi = await wifiRepository.findByLabelAndUserId(loggedUser, wifiData.label);
+    if(wifi) throw errorFactory('conflict', 'There is already a wifi registered with this label/title on your account.');
     
-	 const { userId, label, name, password} = wifiData;
-    await wifiRepository.create({ userId, label, name, password });
+    wifiData.password = cryptr.encrypt(wifiData.password);
+    await wifiRepository.create(wifiData);
 
 }
 
-async function getById(id: number){
+async function getById(loggedUser: number, id: number){
 
-    await wifiRepository.getById(id);
+    const wifi = await wifiRepository.getById(id);
+    if(!wifi || wifi.userId !== loggedUser) throw errorFactory('not_found', 'Could not find the wifi.');
 
-}
-
-async function list(){
-
-    await wifiRepository.list();
+    return wifi;
 
 }
 
-async function updateWifi(id: number, wifiData: { userId: any, label: any, name: any, password: any }){
-    
-	 const { userId, label, name, password } = wifiData;
-    await wifiRepository.update(id, { userId, label, name, password });
+async function list(loggedUser: number){
+
+    const wifis = await wifiRepository.list(loggedUser);
+    return wifis;
 
 }
 
-async function deleteWifi(id: number){
+async function deleteWifi(loggedUser: number, id: number){
+
+    const wifi = await wifiRepository.getById(id);
+    if(!wifi || wifi.userId !== loggedUser) throw errorFactory('not_found', 'Could not find the wifi.');
 
     await wifiRepository.deleteWifi(id);
 
@@ -37,6 +49,5 @@ export default {
     createWifi,
     getById,
     list,
-    updateWifi,
     deleteWifi
 }

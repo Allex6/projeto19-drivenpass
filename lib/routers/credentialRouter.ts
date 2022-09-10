@@ -1,28 +1,29 @@
 import { Router } from 'express';
 import credentialController from '../controllers/credentialController';
+import loginValidator from '../middlewares/loginValidator';
 import schemaValidator from '../middlewares/schemaValidator';
 import credentialSchema from '../schemas/credentialSchema';
 
 const router = Router();
 
 router.post('/', 
-    schemaValidator(credentialSchema), 
+    loginValidator,
+    schemaValidator(credentialSchema),
     credentialController.createCredential
 );
 
-router.get('/', 
+router.get('/',
+    loginValidator,
     credentialController.list
 );
 
 router.get('/:id',
+    loginValidator,
     credentialController.getById
 );
 
-router.put('/:id',
-    credentialController.updateCredential
-);
-
 router.delete('/:id',
+    loginValidator,
     credentialController.deleteCredential
 );
 

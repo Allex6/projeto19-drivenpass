@@ -1,77 +1,26 @@
-import postgres from './../databases/postgres';
+import prisma from '../databases/prisma';
+import { UserCreate } from './../types/userTypes';
 
 /**
  * @description Insert a new user record into the database.
- * @param {Object} userData An object with the fields needed to create a user
+ * @param {UserCreate} userData An object with the fields needed to create a user
  */
-async function create(userData: { email: any, password: any }){
+async function create(userData: UserCreate){
     
-	 const { email, password } = userData;
-    await postgres.user.create({ email, password });
-
-}
-
-/**
- * @description Search for a user by ID.
- * @param {Number} id The user id saved in the database.
- * @returns The user saved in the database, or null if it does not exists.
- */
-async function getById(id: number){
-
-    return await postgres.user.findUnique({
-        where: {
-            id
-        }
+    await prisma.users.create({
+        data: userData
     });
 
 }
 
-/**
- * @description Search for a list of users.
- * @returns A list of users.
- */
-async function list(){
+async function findByEmail(email: string){
 
-    return await postgres.user.findMany();
-
-}
-
-/**
- * @description Updates all data of a single record of user
- * @param {Object} userData An object with the fields needed to update a user
- */
-async function update(id: number, userData: { email: any, password: any }){
-    
-	 const { email, password } = userData;
-    await postgres.user.update({
-        where: {
-            id
-        },
-        data: {
-            email, password
-        }
-    });
-
-}
-
-/**
- * @description Deletes a user by ID.
- * @param {Number} id The user id saved in the database.
- */
-async function deleteUser(id: number){
-
-    await postgres.user.delete({
-        where: {
-            id
-        },
-    });
+    const user = await prisma.users.findUnique({ where: { email } });
+    return user;
 
 }
 
 export default {
     create,
-    getById,
-    list,
-    update,
-    deleteUser
+    findByEmail
 }

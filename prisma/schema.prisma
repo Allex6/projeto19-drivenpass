@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model cards {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  label          String
+  cardNumber     String
+  cardHolderName String
+  securityCode   String
+  expirationDate String
+  password       String
+  isVirtual      Boolean   @default(false)
+  type           card_type @default(credit)
+  createdAt      DateTime? @default(dbgenerated("'2022-09-10 08:48:43.308815'::timestamp without time zone")) @db.Timestamp(6)
+  users          users     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([userId, label])
+}
+
+model credentials {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  label     String
+  url       String
+  username  String
+  password  String
+  createdAt DateTime? @default(dbgenerated("'2022-09-10 08:48:43.308815'::timestamp without time zone")) @db.Timestamp(6)
+  users     users     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([userId, label])
+}
+
+model safeNotes {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  label     String    @db.VarChar(50)
+  content   String    @db.VarChar(1000)
+  createdAt DateTime? @default(dbgenerated("'2022-09-10 08:48:43.308815'::timestamp without time zone")) @db.Timestamp(6)
+  users     users     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([userId, label])
+}
+
+model users {
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
+  password    String
+  createdAt   DateTime?     @default(dbgenerated("'2022-09-10 08:48:43.308815'::timestamp without time zone")) @db.Timestamp(6)
+  cards       cards[]
+  credentials credentials[]
+  safeNotes   safeNotes[]
+  wifis       wifis[]
+}
+
+model wifis {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  label     String
+  name      String
+  password  String
+  createdAt DateTime? @default(dbgenerated("'2022-09-10 08:48:43.308815'::timestamp without time zone")) @db.Timestamp(6)
+  users     users     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([userId, label])
+}
+
+enum card_type {
+  credit
+  debit
+  credit_debit
+}

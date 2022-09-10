@@ -1,42 +1,43 @@
 import userRepository from '../repositories/userRepository';
 import errorFactory from '../utils/errorFactory';
+import { UserCreate } from './../types/userTypes';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
-async function createUser(userData: { email: any, password: any }){
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'strong secret';
+const DEFAULT_EXPIRATION_TIME = 3600; // 1h
+
+async function createUser(userData: UserCreate){
     
-	 const { email, password} = userData;
-    await userRepository.create({ email, password });
+    const userWithSameEmail = await userRepository.findByEmail(userData.email);
+    if(userWithSameEmail) throw errorFactory('conflict', 'This email is already being used.');
+
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    userData.password = hashedPassword;
+
+    await userRepository.create(userData);
 
 }
 
-async function getById(id: number){
+async function login(userData: UserCreate){
 
-    await userRepository.getById(id);
+    const defaultErrorMessage = 'invalid credentials. Make sure you typed it correctly';
 
-}
+    const user = await userRepository.findByEmail(userData.email);
+    if(!user) throw errorFactory('unauthorized', defaultErrorMessage);
 
-async function list(){
+    const correctPassword = await bcrypt.compare(userData.password, user.password);
+    if(!correctPassword) throw errorFactory('unauthorized', defaultErrorMessage);
 
-    await userRepository.list();
-
-}
-
-async function updateUser(id: number, userData: { email: any, password: any }){
-    
-	 const { email, password } = userData;
-    await userRepository.update(id, { email, password });
-
-}
-
-async function deleteUser(id: number){
-
-    await userRepository.deleteUser(id);
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: DEFAULT_EXPIRATION_TIME });
+    return token;
 
 }
 
 export default {
     createUser,
-    getById,
-    list,
-    updateUser,
-    deleteUser
+    login
 }
