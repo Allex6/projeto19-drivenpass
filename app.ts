@@ -11,7 +11,7 @@ import errorHandler from './lib/middlewares/errorHandler';
 
 dotenv.config();
 
-const SERVER_PORT = process.env.SERVER_PORT ? process.env.SERVER_PORT : 3000;
+const PORT = process.env.PORT ? process.env.PORT : 3000;
 
 const app = express();
 app.use(cors());
@@ -25,4 +25,4 @@ app.use('/wifis', wifiRouter);
 
 app.use(errorHandler);
 
-app.listen(SERVER_PORT, () => console.log(`Server running at port ${SERVER_PORT}`));
+app.listen(PORT, () => console.log(`Server running at port ${PORT}`));
